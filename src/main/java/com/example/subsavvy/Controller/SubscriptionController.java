@@ -3,6 +3,7 @@ package com.example.subsavvy.Controller;
 import com.example.subsavvy.Data.Subscription;
 import com.example.subsavvy.Service.SubscriptionService;
 import com.example.subsavvy.dto.SubscriptionDto;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -14,12 +15,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/subscriptions")
+@RequiredArgsConstructor
 public class SubscriptionController {
 
     private static final Logger logger = LoggerFactory.getLogger(SubscriptionController.class);
 
 
-    private SubscriptionService subscriptionService;
+    private final SubscriptionService subscriptionService;
 
     @GetMapping("/{userId}")
     public List<Subscription> getAllSubscriptions(@PathVariable UUID userId) {

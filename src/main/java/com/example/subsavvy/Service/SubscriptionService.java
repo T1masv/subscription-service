@@ -3,6 +3,8 @@ package com.example.subsavvy.Service;
 import com.example.subsavvy.Data.Status;
 import com.example.subsavvy.Data.Subscription;
 import com.example.subsavvy.Repository.SubscriptionRepository;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -14,12 +16,11 @@ import java.util.UUID;
 
 
 @Service
+@RequiredArgsConstructor
 public class SubscriptionService {
 
 
-    private SubscriptionRepository subscriptionRepository;
-
-
+    private final SubscriptionRepository subscriptionRepository;
 
     public List<Subscription> getAllSubscriptions() {
         return subscriptionRepository.findAll();
