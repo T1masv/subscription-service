@@ -75,7 +75,7 @@ jobs:
         run: ./gradlew build # Or ./gradlew build if you use Gradle
 
       - name: Build Docker Image
-        run: docker build --file Dockerfile --tag ghcr.io/${{ github.repository }}:${{ steps.versioning.outputs.NEW_VERSION }} . # Using dynamic version
+        run: docker buildx build --platform=linux/amd64,linux/arm64 --file Dockerfile --tag ghcr.io/projetintrocloud/subscrption-service:${{ steps.versioning.outputs.NEW_VERSION }} . # Using dynamic version
 
       - name: Helm Dependency Update
         run: helm dependency update chart/ # Make sure dependencies are updated
