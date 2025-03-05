@@ -68,7 +68,9 @@ jobs:
             git commit -m "chore: update version to $NEW_VERSION" || echo "No version file change to commit"
             git push origin master || echo "No version file change to push"
           fi
-
+      
+      - name: Add exec perms on gradlew
+        run: chmod +x ./gradlew
       - name: Build Spring Boot App
         run: ./gradlew build # Or ./gradlew build if you use Gradle
 
