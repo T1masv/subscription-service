@@ -84,14 +84,14 @@ jobs:
         run: |
           VERSION_STRING="${{ steps.versioning.outputs.NEW_VERSION }}"
           sed -i "s/version: 0.1.0/version: $VERSION_STRING/g" chart/Chart.yaml # Update Helm chart version
-          helm package chart/ --version ${{ steps.versioning.outputs.NEW_VERSION }} # Package chart with dynamic version
+          helm package helm/subscription/ --version ${{ steps.versioning.outputs.NEW_VERSION }} # Package chart with dynamic version
 
       - name: Push Docker Image to GHCR
         run: docker push ghcr.io/projetintrocloud/subscrption-service:${{ steps.versioning.outputs.NEW_VERSION }} # Using dynamic version
 
       - name: Push Helm Chart to GHCR
         run: |
-          CHART_FILE=$(helm package chart/ --version ${{ steps.versioning.outputs.NEW_VERSION }} | awk '{print $NF}') # Dynamic chart file name
+          CHART_FILE=$(helm package helm/subscription/  --version ${{ steps.versioning.outputs.NEW_VERSION }} | awk '{print $NF}') # Dynamic chart file name
           helm push $CHART_FILE ghcr.io/projetintrocloud/subscrption-service
 
       - name: Create Git Tag
