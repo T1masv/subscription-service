@@ -1,0 +1,98 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to fetch all history for tags
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Helm
+        uses: helm/setup-helm@v3
+        with:
+          helm-version: 'v3.12.0'
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine Version and Increment Patch
+        id: versioning
+        run: |
+          VERSION_FILE=VERSION
+          if [ -f "$VERSION_FILE" ]; then
+            CURRENT_VERSION=$(cat $VERSION_FILE)
+            IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+            PATCH_VERSION=$((patch + 1))
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              NEW_VERSION="1.0.$PATCH_VERSION-snap"
+            else
+              NEW_VERSION="1.0.$PATCH_VERSION"
+            fi
+          else
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              NEW_VERSION="1.0.0-snap"
+            else
+              NEW_VERSION="1.0.0"
+            fi
+          fi
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "$NEW_VERSION" > $VERSION_FILE
+          if [ "${{ github.event_name }}" == "push" ]; then
+            git config --local user.email "actions@github.com"
+            git config --local user.name "GitHub Actions"
+            git add $VERSION_FILE
+            git commit -m "chore: update version to $NEW_VERSION" || echo "No version file change to commit"
+            git push origin master || echo "No version file change to push"
+          fi
+
+      - name: Build Spring Boot App
+        run: ./mvnw clean package -DskipTests # Or ./gradlew build if you use Gradle
+
+      - name: Build Docker Image
+        run: docker build --file Dockerfile --tag ghcr.io/${{ github.repository }}:${{ steps.versioning.outputs.NEW_VERSION }} . # Using dynamic version
+
+      - name: Helm Dependency Update
+        run: helm dependency update chart/ # Make sure dependencies are updated
+
+      - name: Build Helm Chart
+        run: |
+          VERSION_STRING="${{ steps.versioning.outputs.NEW_VERSION }}"
+          sed -i "s/version: 0.1.0/version: $VERSION_STRING/g" chart/Chart.yaml # Update Helm chart version
+          helm package chart/ --version ${{ steps.versioning.outputs.NEW_VERSION }} # Package chart with dynamic version
+
+      - name: Push Docker Image to GHCR
+        run: docker push ghcr.io/${{ github.repository }}:${{ steps.versioning.outputs.NEW_VERSION }} # Using dynamic version
+
+      - name: Push Helm Chart to GHCR
+        run: |
+          CHART_FILE=$(helm package chart/ --version ${{ steps.versioning.outputs.NEW_VERSION }} | awk '{print $NF}') # Dynamic chart file name
+          helm push $CHART_FILE ghcr.io/${{ github.repository }}
+
+      - name: Create Git Tag
+        if: github.event_name == 'push' # Only tag on push to master (merge)
+        run: |
+          git tag ${{ steps.versioning.outputs.NEW_VERSION }}
+          git push origin ${{ steps.versioning.outputs.NEW_VERSION }}
