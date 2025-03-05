@@ -78,7 +78,7 @@ jobs:
         run: docker buildx build --platform=linux/amd64,linux/arm64 --file Dockerfile --tag ghcr.io/projetintrocloud/subscrption-service:${{ steps.versioning.outputs.NEW_VERSION }} . # Using dynamic version
 
       - name: Helm Dependency Update
-        run: helm dependency update chart/ # Make sure dependencies are updated
+        run: helm dependency update helm/subscription/ # Make sure dependencies are updated
 
       - name: Build Helm Chart
         run: |
