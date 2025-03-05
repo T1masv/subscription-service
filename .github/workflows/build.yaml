@@ -27,9 +27,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Set up Helm
-        uses: helm/setup-helm@v3
+        uses: azure/setup-helm@v4.3.0
         with:
-          helm-version: 'v3.12.0'
+          version: 'latest'
+        id: install
 
       - name: Login to GHCR
         uses: docker/login-action@v3
