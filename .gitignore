@@ -1,0 +1,67 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Spring Boot Devtools restart
+spring-devtools.properties
+
+# Maven build directory
+target/
+
+# Gradle build directory
+build/
+.gradle/
+/gradle/
+
+# Intellij IDEA #
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse #
+.classpath
+.project
+.settings/
+bin/
+
+# NetBeans #
+nbproject/
+
+# VS Code #
+.vscode/
+
+# OS generated files #
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+
+# Docker related
+docker-compose.override.yml
+docker-compose.yml
+!Dockerfile
+
+# Executables
+*.exe
+*.sh # if you have shell scripts that are build outputs
+
+# Dependency directories (if you commit them, which is usually not recommended)
+lib/
+dependencies/
+
+# Java module paths (if applicable)
+.jmodules/
+
+# Helm Dependencies - Keep dependency charts, ignore archives and lock files
+helm/*/charts/*
+helm/*/Chart.lock
