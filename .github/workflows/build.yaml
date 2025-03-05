@@ -70,7 +70,7 @@ jobs:
           fi
 
       - name: Build Spring Boot App
-        run: ./mvnw clean package -DskipTests # Or ./gradlew build if you use Gradle
+        run: ./gradlew build # Or ./gradlew build if you use Gradle
 
       - name: Build Docker Image
         run: docker build --file Dockerfile --tag ghcr.io/${{ github.repository }}:${{ steps.versioning.outputs.NEW_VERSION }} . # Using dynamic version
