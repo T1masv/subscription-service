@@ -83,7 +83,7 @@ jobs:
       - name: Build Helm Chart
         run: |
           VERSION_STRING="${{ steps.versioning.outputs.NEW_VERSION }}"
-          sed -i "s/version: 0.1.0/version: $VERSION_STRING/g" chart/Chart.yaml # Update Helm chart version
+          sed -i "s/version: 0.1.0/version: $VERSION_STRING/g" helm/subscription/Chart.yaml # Update Helm chart version
           helm package helm/subscription/ --version ${{ steps.versioning.outputs.NEW_VERSION }} # Package chart with dynamic version
 
       - name: Push Docker Image to GHCR
