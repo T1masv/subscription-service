@@ -87,12 +87,12 @@ jobs:
           helm package chart/ --version ${{ steps.versioning.outputs.NEW_VERSION }} # Package chart with dynamic version
 
       - name: Push Docker Image to GHCR
-        run: docker push ghcr.io/${{ github.repository }}:${{ steps.versioning.outputs.NEW_VERSION }} # Using dynamic version
+        run: docker push ghcr.io/${{ lower(github.repository) }}:${{ steps.versioning.outputs.NEW_VERSION }} # Using dynamic version
 
       - name: Push Helm Chart to GHCR
         run: |
           CHART_FILE=$(helm package chart/ --version ${{ steps.versioning.outputs.NEW_VERSION }} | awk '{print $NF}') # Dynamic chart file name
-          helm push $CHART_FILE ghcr.io/${{ github.repository }}
+          helm push $CHART_FILE ghcr.io/${{ lower(github.repository) }}
 
       - name: Create Git Tag
         if: github.event_name == 'push' # Only tag on push to master (merge)
