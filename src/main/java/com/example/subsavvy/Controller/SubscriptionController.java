@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/subscriptions")
 @RequiredArgsConstructor
 public class SubscriptionController {
 
