@@ -62,14 +62,18 @@ jobs:
             git commit -m "chore: update version to $NEW_VERSION" || echo "No version file change to commit"
             git push origin master || echo "No version file change to push"
           fi
-      
+
+      - name: Set repository name to lowercase
+        id: repo_name
+        run: echo "::set-output name=repo::$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+
       - name: Add exec perms on gradlew
         run: chmod +x ./gradlew
       - name: Build Spring Boot App
         run: ./gradlew build # Or ./gradlew build if you use Gradle
 
       - name: Build Docker Image
-        run: docker buildx build --platform=linux/amd64,linux/arm64 --file Dockerfile --tag ghcr.io/projetintrocloud/subscription-service:${{ steps.versioning.outputs.NEW_VERSION }} .  --push # Using dynamic version
+        run: docker buildx build --platform=linux/amd64,linux/arm64 --file Dockerfile --tag ghcr.io/${{ steps.repo_name.outputs.repo }}:${{ steps.versioning.outputs.NEW_VERSION }} .  --push # Using dynamic version
 
       - name: list builded images
         run: docker image ls
