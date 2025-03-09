@@ -71,7 +71,8 @@ jobs:
       - name: Build Docker Image
         run: docker buildx build --platform=linux/amd64,linux/arm64 --file Dockerfile --tag ghcr.io/projetintrocloud/subscription-service:${{ steps.versioning.outputs.NEW_VERSION }} . # Using dynamic version
 
-
+      - name: list builded images
+        run: docker image ls
       - name: Push Docker Image to GHCR
         run: docker push ghcr.io/projetintrocloud/subscription-service:${{ steps.versioning.outputs.NEW_VERSION }} # Using dynamic version
 
