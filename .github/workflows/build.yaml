@@ -1,4 +1,4 @@
-name: CI/CD Workflow
+name: Build & Deploy Spring Boot Docker Image (Gradle)
 
 on:
   push:
@@ -9,80 +9,39 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Required to fetch all history for tags
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '21'
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Build with Gradle
+      run: ./gradlew clean build
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine Version and Increment Patch
-        id: versioning
-        run: |
-          VERSION_FILE=VERSION
-          if [ -f "$VERSION_FILE" ]; then
-            CURRENT_VERSION=$(cat $VERSION_FILE)
-            IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
-            PATCH_VERSION=$((patch + 1))
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              NEW_VERSION="1.0.$PATCH_VERSION-snap"
-            else
-              NEW_VERSION="1.0.$PATCH_VERSION"
-            fi
-          else
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              NEW_VERSION="1.0.0-snap"
-            else
-              NEW_VERSION="1.0.0"
-            fi
-          fi
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "$NEW_VERSION" > $VERSION_FILE
-          if [ "${{ github.event_name }}" == "push" ]; then
-            git config --local user.email "actions@github.com"
-            git config --local user.name "GitHub Actions"
-            git add $VERSION_FILE
-            git commit -m "chore: update version to $NEW_VERSION" || echo "No version file change to commit"
-            git push origin master || echo "No version file change to push"
-          fi
+    - name: Build the Docker Image
+      run: |
+        REPOSITORY_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        REPOSITORY_NAME=${GITHUB_REPOSITORY##*/}
+        REPOSITORY_NAME_LOWER=$(echo "$REPOSITORY_NAME" | tr '[:upper:]' '[:lower:]')
+        docker build -t ghcr.io/$REPOSITORY_OWNER/$REPOSITORY_NAME_LOWER:latest .
 
-      - name: Set repository name to lowercase
-        id: repo_name
-        run: echo "::set-output name=repo::$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
-
-      - name: Add exec perms on gradlew
-        run: chmod +x ./gradlew
-      - name: Build Spring Boot App
-        run: ./gradlew build # Or ./gradlew build if you use Gradle
-
-      - name: Build Docker Image
-        run: docker buildx build --platform=linux/amd64,linux/arm64 --file Dockerfile --tag ghcr.io/${{ steps.repo_name.outputs.repo }}:${{ steps.versioning.outputs.NEW_VERSION }} .  --push # Using dynamic version
-
-      - name: list builded images
-        run: docker image ls
-#
-#      - name: Push Docker Image to GHCR
-#        run: docker push ghcr.io/projetintrocloud/subscription-service:${{ steps.versioning.outputs.NEW_VERSION }} # Using dynamic version
-
-      - name: Create Git Tag
-        if: github.event_name == 'push' # Only tag on push to master (merge)
-        run: |
-          git tag ${{ steps.versioning.outputs.NEW_VERSION }}
-          git push origin ${{ steps.versioning.outputs.NEW_VERSION }}
+    - name: Push the Docker Image to GitHub Container Registry
+      run: |
+        REPOSITORY_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        REPOSITORY_NAME=${GITHUB_REPOSITORY##*/}
+        REPOSITORY_NAME_LOWER=$(echo "$REPOSITORY_NAME" | tr '[:upper:]' '[:lower:]')
+        docker push ghcr.io/$REPOSITORY_OWNER/$REPOSITORY_NAME_LOWER:latest
